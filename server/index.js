@@ -419,17 +419,31 @@ app.put("/api/wiki", (req, res) => {
   res.json({ ok: true, mtime: stat.mtime.toISOString(), size: stat.size });
 });
 
-// ── Static files ────────────────────────────────────────────────
+// ── Static files (skipped in API_ONLY dev mode) ─────────────────
 
-app.use(express.static(path.join(__dirname, "dist")));
-app.get("*", (_req, res) => res.sendFile(path.join(__dirname, "dist", "index.html")));
+const API_ONLY = process.env.API_ONLY === "1" || process.env.NODE_ENV === "development";
+
+if (!API_ONLY) {
+  const distPath = path.join(__dirname, "..", "dist");
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    app.get("*", (_req, res) => res.sendFile(path.join(distPath, "index.html")));
+    console.log(`Static: serving ${distPath}`);
+  } else {
+    console.log("Static: dist/ not found — run 'npm run build' first for production mode");
+    console.log("Static: API-only mode (use 'npm run dev:pi' for development)");
+  }
+} else {
+  console.log("Static: skipped (API_ONLY / development mode)");
+}
 
 // ── Start ───────────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Atlas server running on http://localhost:${PORT}`);
-  console.log(`Mode: ${process.env.HERMES_MODE === "pi" ? "Pi (HTTP API)" : "Hermes (WebSocket Gateway)"}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Atlas server running on http://0.0.0.0:${PORT}`);
   console.log(`Pi binary: ${PI_BIN}`);
-  console.log(`Vault: ${VAULT_PATH}`);
+  console.log(`Work dir: ${WORK_DIR}`);
+  console.log(`Vault:    ${VAULT_PATH}`);
+  if (API_ONLY) console.log(`Mode:     API-only (dev)`);
 });

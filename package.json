@@ -5,9 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:pi": "node scripts/dev-pi.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "node server/index.js",
+    "start:pi": "npm run build && npm run server"
   },
   "dependencies": {
     "@nanostores/react": "^1.1.0",
